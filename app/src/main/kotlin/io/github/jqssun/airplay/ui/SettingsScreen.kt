@@ -40,6 +40,7 @@ fun SettingsScreen(viewModel: MainViewModel) {
     val serverName by viewModel.pref(Prefs.SERVER_NAME).collectAsState()
     val h265 by viewModel.pref(Prefs.H265).collectAsState()
     val enforceSdr by viewModel.pref(Prefs.ENFORCE_SDR).collectAsState()
+    val fullRange by viewModel.pref(Prefs.FULL_RANGE).collectAsState()
     val alacEnabled by viewModel.pref(Prefs.ALAC_ENABLED).collectAsState()
     val aacEnabled by viewModel.pref(Prefs.AAC_ENABLED).collectAsState()
     val resolution by viewModel.pref(Prefs.RESOLUTION).collectAsState()
@@ -318,6 +319,13 @@ fun SettingsScreen(viewModel: MainViewModel) {
                 description = stringResource(R.string.setting_enforce_sdr_desc),
                 checked = enforceSdr,
                 onCheckedChange = { viewModel.set(Prefs.ENFORCE_SDR, it) }
+            )
+
+            SettingSwitch(
+                title = stringResource(R.string.setting_full_range),
+                description = stringResource(R.string.setting_full_range_desc),
+                checked = fullRange,
+                onCheckedChange = { viewModel.set(Prefs.FULL_RANGE, it) }
             )
 
             SettingSwitch(

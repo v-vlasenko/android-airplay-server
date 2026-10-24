@@ -405,6 +405,7 @@ class AirPlayService : LifecycleService(), RaopCallbackHandler, LogListener {
         val aac = prefs[Prefs.AAC_ENABLED]
 
         videoRenderer.enforceSdr = prefs[Prefs.ENFORCE_SDR]
+        videoRenderer.fullRange = prefs[Prefs.FULL_RANGE]
         videoRenderer.keyAllowFrameDrop = prefs[Prefs.KEY_ALLOW_FRAME_DROP]
         videoRenderer.selector.maxOperatingRate = Prefs.forced(prefs[Prefs.OPERATING_RATE])
         videoRenderer.benchmarkLog = prefs[Prefs.BENCHMARK_LOG]

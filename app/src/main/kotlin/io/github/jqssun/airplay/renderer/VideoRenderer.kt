@@ -32,6 +32,9 @@ class VideoRenderer(ctx: Context) {
     @Volatile var framePacingJitterUs = 0L; private set
 
     var enforceSdr = true
+    var fullRange: Boolean
+        get() = pipeline.fullRange
+        set(v) { pipeline.fullRange = v }
     var keyAllowFrameDrop = true
     var scheduledOutputBufferRelease = true
     var benchmarkLog = false

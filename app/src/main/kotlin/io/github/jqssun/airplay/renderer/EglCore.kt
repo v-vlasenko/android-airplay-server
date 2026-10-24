@@ -7,7 +7,7 @@ import android.opengl.EGLDisplay
 import android.opengl.EGLSurface
 import android.view.Surface
 
-class EglCore : AutoCloseable {
+class EglCore(es3: Boolean = false) : AutoCloseable {
 
     private val display: EGLDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
     private val config: EGLConfig
@@ -17,7 +17,7 @@ class EglCore : AutoCloseable {
     init {
         EGL14.eglInitialize(display, IntArray(2), 0, IntArray(2), 1)
         val attribs = intArrayOf(
-            EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+            EGL14.EGL_RENDERABLE_TYPE, if (es3) EGL_OPENGL_ES3_BIT else EGL14.EGL_OPENGL_ES2_BIT,
             EGL14.EGL_SURFACE_TYPE, EGL14.EGL_WINDOW_BIT or EGL14.EGL_PBUFFER_BIT,
             EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8, EGL14.EGL_BLUE_SIZE, 8,
             EGL14.EGL_NONE
@@ -27,8 +27,9 @@ class EglCore : AutoCloseable {
         config = configs[0] ?: error("no egl config")
         context = EGL14.eglCreateContext(
             display, config, EGL14.EGL_NO_CONTEXT,
-            intArrayOf(EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE), 0
+            intArrayOf(EGL14.EGL_CONTEXT_CLIENT_VERSION, if (es3) 3 else 2, EGL14.EGL_NONE), 0
         )
+        check(context != EGL14.EGL_NO_CONTEXT) { "no egl context" }
         pbuffer = EGL14.eglCreatePbufferSurface(
             display, config, intArrayOf(EGL14.EGL_WIDTH, 1, EGL14.EGL_HEIGHT, 1, EGL14.EGL_NONE), 0
         )
@@ -55,5 +56,9 @@ class EglCore : AutoCloseable {
         EGL14.eglDestroySurface(display, pbuffer)
         EGL14.eglDestroyContext(display, context)
         EGL14.eglTerminate(display)
+    }
+
+    private companion object {
+        const val EGL_OPENGL_ES3_BIT = 0x40
     }
 }

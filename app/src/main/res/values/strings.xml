@@ -141,6 +141,8 @@
     <!-- Settings: Decode -->
     <string name="setting_h265">H.265 (HEVC)</string>
     <string name="setting_h265_desc">Auto only uses H.265 decoders known to work</string>
+    <string name="setting_full_range">Full-range video</string>
+    <string name="setting_full_range_desc">Convert raw YUV from the decoder as full range in the shader; fixes crushed shadows and blown highlights where the decoder expands the full-range iOS stream as limited (Amlogic)</string>
     <string name="setting_enforce_sdr">MediaFormat.KEY_COLOR_TRANSFER</string>
     <string name="setting_enforce_sdr_desc">Tag video as limited SDR; disable to allow HDR sources to pass through</string>
     <string name="setting_sw_alac">Force software ALAC decoder</string>

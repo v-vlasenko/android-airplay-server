@@ -42,6 +42,9 @@ class VideoPipeline {
     @Volatile private var videoW = 0
     @Volatile private var videoH = 0
 
+    // full-range sources: sample raw YUV and convert here, since some decoders (Amlogic) expand them as limited
+    @Volatile var fullRange = false
+
     fun start() = synchronized(lock) {
         if (running) return@synchronized
         running = true
@@ -73,7 +76,12 @@ class VideoPipeline {
 
     private fun _loop() {
         try {
-            egl = EglCore()
+            egl = try {
+                EglCore(es3 = fullRange)
+            } catch (e: Exception) {
+                Log.w(TAG, "GLES3 context failed, using GLES2", e)
+                EglCore()
+            }
             _initGl()
         } catch (e: Exception) {
             Log.e(TAG, "GL init failed", e)
@@ -184,8 +192,10 @@ class VideoPipeline {
     }
 
     private fun _buildProgram(): Int {
-        val vs = _shader(GLES20.GL_VERTEX_SHADER, VERT)
-        val fs = _shader(GLES20.GL_FRAGMENT_SHADER, FRAG)
+        val yuv = fullRange && GLES20.glGetString(GLES20.GL_EXTENSIONS)?.contains("GL_EXT_YUV_target") == true
+        Log.i(TAG, "full range ${fullRange}, raw yuv sampling $yuv")
+        val vs = _shader(GLES20.GL_VERTEX_SHADER, if (yuv) VERT_ES3 else VERT)
+        val fs = _shader(GLES20.GL_FRAGMENT_SHADER, if (yuv) FRAG_YUV_FULL else FRAG)
         return GLES20.glCreateProgram().also {
             GLES20.glAttachShader(it, vs)
             GLES20.glAttachShader(it, fs)
@@ -245,6 +255,31 @@ class VideoPipeline {
             "uniform samplerExternalOES sTex;\n" +
             "void main() {\n" +
             "  gl_FragColor = texture2D(sTex, vTex);\n" +
+            "}\n"
+
+        private const val VERT_ES3 =
+            "#version 300 es\n" +
+            "in vec2 aPos;\n" +
+            "in vec2 aTex;\n" +
+            "uniform mat4 uTexMatrix;\n" +
+            "out vec2 vTex;\n" +
+            "void main() {\n" +
+            "  gl_Position = vec4(aPos, 0.0, 1.0);\n" +
+            "  vTex = (uTexMatrix * vec4(aTex, 0.0, 1.0)).xy;\n" +
+            "}\n"
+
+        // raw Y'CbCr from the decoder, BT.709 full range to RGB
+        private const val FRAG_YUV_FULL =
+            "#version 300 es\n" +
+            "#extension GL_EXT_YUV_target : require\n" +
+            "precision mediump float;\n" +
+            "in vec2 vTex;\n" +
+            "uniform __samplerExternal2DY2YEXT sTex;\n" +
+            "out vec4 fragColor;\n" +
+            "void main() {\n" +
+            "  vec3 c = texture(sTex, vTex).xyz - vec3(0.0, 0.5, 0.5);\n" +
+            "  vec3 rgb = vec3(c.x + 1.5748 * c.z, c.x - 0.1873 * c.y - 0.4681 * c.z, c.x + 1.8556 * c.y);\n" +
+            "  fragColor = vec4(clamp(rgb, 0.0, 1.0), 1.0);\n" +
             "}\n"
     }
 }
